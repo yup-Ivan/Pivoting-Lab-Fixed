@@ -1,0 +1,6 @@
+networks:
+  attacker:
+    driver: bridge
+
+  victim:
+    driver: bridge
