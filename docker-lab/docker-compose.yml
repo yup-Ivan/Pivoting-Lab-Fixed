@@ -1,0 +1,81 @@
+services:
+  attacker:
+    build:
+      context: ./dockerfiles
+      dockerfile: attacker.Dockerfile
+    container_name: attacker
+    hostname: attacker
+    networks:
+      - attacker
+    tty: true
+
+  helper:
+    build:
+      context: ./dockerfiles
+      dockerfile: helper.Dockerfile
+    container_name: helper
+    hostname: helper
+    networks:
+      - attacker
+      - victim
+
+  victim1:
+    build:
+      context: ./dockerfiles
+      dockerfile: victim1.Dockerfile
+    container_name: victim1
+    hostname: victim1
+    networks:
+      - victim
+
+  victim2:
+    image: vulhub/wordpress:4.6
+    container_name: victim2
+    hostname: victim2
+    depends_on:
+      - mysql
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: root
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8080:80"
+    networks:
+      - victim
+    volumes:
+      - wp_vol:/var/www/html
+
+  mysql:
+    image: mysql:5
+    container_name: victim2_mysql
+    hostname: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - victim
+
+  wp-cli:
+    image: forumone/wordpress-cli:7.1-cli2.3.0
+    depends_on:
+      - mysql
+      - victim2
+    volumes:
+      - wp_vol:/var/www/html
+    networks:
+      - victim
+    command: >
+      sh -c "
+      sleep 15 &&
+      wp core install
+      --path=/var/www/html
+      --url=http://victim2
+      --title='Pivot Your Way'
+      --admin_user=admin
+      --admin_password=adminpass
+      --admin_email=admin@admin.com
+      --allow-root
+      "
+
+volumes:
+  wp_vol:
