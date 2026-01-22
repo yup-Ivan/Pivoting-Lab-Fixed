@@ -7,3 +7,4 @@ nano /etc/docker/daemon.json<br>
 { <br>
   "dns": ["8.8.8.8", "1.1.1.1"]<br>
 }<br>
+sudo systemctl restart docker<br>
